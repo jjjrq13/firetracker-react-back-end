@@ -9,7 +9,7 @@ const SALT_LENGTH = 12;
 router.post('/signup', async (req, res) => {
     try {
 
-        const userInDatabase = User.findOne({
+        const userInDatabase = await User.findOne({
             username: req.body.username.toLowerCase(),
         });
 
@@ -23,7 +23,7 @@ router.post('/signup', async (req, res) => {
             return res.json({ error: 'Passwords do not match' });
         }
 
-        const userData = {};
+        let userData = {};
 
         if (!userInDatabase && req.body.password === req.body.confirmPassword) {
             userData = { ...req.body };
@@ -32,19 +32,20 @@ router.post('/signup', async (req, res) => {
             delete userData.confirmPassword;
             delete userData.username;
 
-            userData.password = bcrypt.hashSync(req.body.password, SALT_LENGTH);
+            userData.hashedPassword = bcrypt.hashSync(req.body.password, SALT_LENGTH);
             userData.username = req.body.username.toLowerCase();
-        }
+        } 
 
         const user = await User.create(userData);
         const token = jwt.sign(
-            { username: user.username, _id: user._id },
+            { username: user.username, _id: user._id, isAdmin: user.isAdmin },
             process.env.JWT_SECRET,
         );
 
         res.status(201).json({ user, token });
 
-    } catch {
+    } catch(error) {
+      console.log(error);
         res.status(400).json({ error: 'Sign up not working' });
 
     }
@@ -56,7 +57,7 @@ router.post('/signin', async (req, res) => {
 
       if (user && bcrypt.compareSync(req.body.password, user.hashedPassword)) {
         const token = jwt.sign(
-          { username: user.username, _id: user._id },
+          { username: user.username, _id: user._id, isAdmin: user.isAdmin},
           process.env.JWT_SECRET
         );
 
@@ -65,9 +66,11 @@ router.post('/signin', async (req, res) => {
       } else {
         res.status(401).json({ error: 'Invalid username or password.' });
       }
-    } catch (error) {
+    } catch(error) {
+      console.log(error);
       res.status(400).json({ error: 'Sign in not working' });
     }
 });
 
 module.exports = router;
+

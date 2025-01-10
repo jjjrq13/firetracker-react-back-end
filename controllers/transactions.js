@@ -2,15 +2,18 @@ const express = require('express');
 const router = express.Router();
 const Transactions = require('../models/transaction');
 const verifyToken = require('../middleware/verify-token');
-const admin = require('../middleware/admin');
-const User = require('../models/user');
+const Users = require('../models/user');
 
 
 router.use(verifyToken);
 
 router.get('/', async (req, res) => {
     try {
+        console.log(req.user._id)
+
         const userId = req.user._id;
+
+        console.log(userId);
 
         const transactions = await Transactions.find({ userId }).sort({ date: -1 });
 
@@ -27,7 +30,7 @@ router.get('/', async (req, res) => {
 
         res.status(200).json({
             transactions,
-            balance: income - expenses,
+            balance: income + expenses,
             totalIncome: income,
             totalExpenses: expenses,
         });
@@ -40,7 +43,9 @@ router.get('/', async (req, res) => {
 router.post('/', async (req, res) => {
     try {
 
-      req.body.author = req.user._id;
+        console.log(req.body.userId)
+
+      req.body.userId = req.user._id;
 
       const transaction = await Transactions.create(req.body);
 
@@ -88,32 +93,6 @@ router.delete('/:transactionId', verifyToken, async (req, res) => {
 
     } catch (error) {
         res.status(500).json({ error: 'Failed to delete transaction' });
-    }
-});
-
-router.use(admin);
-
-router.get('/admin/users', async (req, res) => {
-    try {
-
-        const users = await User.find({});
-
-        res.status(200).json(users);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-router.delete('/admin/users/:userId', async (req, res) => {
-    try {
-        const userId = req.params.userId;
-
-        const user86 = await User.findByIdAndDelete(userId);
-
-        res.status(200).json(user86);
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Failed to delete user' });
     }
 });
 
