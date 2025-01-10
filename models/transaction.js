@@ -17,7 +17,6 @@ const transactionSchema = new mongoose.Schema(
             maxlength: 100,
         },
         amount: {
-            value: 123.122,
             type: Number,
             required: true,
         },
@@ -49,8 +48,21 @@ const transactionSchema = new mongoose.Schema(
 
 transactionSchema.pre('save', async function () {
     this.amount = Math.round(this.amount * 100) / 100;
+
+    this.date = this.date.toLocaleDateString(
+        'en-US',
+        {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+        },
+    );
+
+    if (this.type === 'Expense' && this.amount > 0) {
+        this.amount = this.amount * -1;
+    }
 });
 
-const Transactions = mongoose.model('Transactions', transactionSchema);
-module.exports = Transactions;
+const Transaction = mongoose.model('Transactions', transactionSchema);
 
+module.exports = Transaction;

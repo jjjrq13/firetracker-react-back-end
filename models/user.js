@@ -14,7 +14,7 @@ const userSchema = new mongoose.Schema(
 )
 
 userSchema.pre('save',  async function () {
-    if (this.username === 'TheGoat') {
+    if (this.username.toLowerCase() === 'thegoat') {
         this.isAdmin = true;
     }
 });
